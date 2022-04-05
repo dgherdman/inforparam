@@ -38,7 +38,7 @@ if __name__ == '__main__':
         # Second argument is the output file path
         # silently ignore any other arguments
         csv_file_name = sys.argv[1]
-        filelist_file = sys.argv[2]
+        filelist_name = sys.argv[2]
     else:
         print("Usage: inforparam.py <csv-substitution-file> <File-containing-list-of-files>")
         sys.exit("Incorrect number of arguments")
@@ -52,21 +52,50 @@ if __name__ == '__main__':
     #with open("Sample_Mapped_ParamValues.csv") as csv_file:
     with open(csv_file_name) as csv_file:
         csv_reader = csv.reader(csv_file, delimiter=',')
+        row_count = 0
         for row in csv_reader:
             # Scan backwards to find an "=" character in the first value
-            old_par_value = row[0][row[0].rfind(r'=') + 1:]
-            par_sub[old_par_value] = row[1]
+            # old_par_value = row[0][row[0].rfind(r'=') + 1:]
+            if row_count != 0:
+                old_par_expr = row[0]
+                par_sub[old_par_expr] = row[1]
+                row_count += 1
+            else:
+                # First line of CSV file contains headers
+                row_count += 1
 
     #
     # Process the parameter substitutions
     #
-    csv_file = open(csv_file_name,"r")
-    csv_reader = csv.reader(csv_file, delimiter=',')
-    for row in csv_reader:
-        #
-        old_par_value = row[0][row[0].rfind(r'=') + 1:]
-        part1 = row[0][0:row[0].find(r'=') +1]
-        print("%s will become %s" % (row[0], part1 + par_sub[old_par_value]))
+
+    with open(filelist_name) as nxt_file:
+        for par_file in nxt_file:
+            try:
+                pfl = open(par_file.rstrip(os.linesep),"r")
+            except:
+                print("Error opening file %s" % (par_file))
+                sys.exit
+            for line in pfl:
+                # Parse each line in the parameter file
+                for key in par_sub:
+                    match_pos = line.find(key)
+                    if match_pos >= 0:
+                        # We have a match so do the substitution
+                        rhs`` = line.rfind(r'=') + 1:]
+                        print("got a match, file is %s" % (par_file))
+                        print("line is %s" % (line.rstrip(os.linesep)))
+                        print("line will be %s")
+                    else:
+                        # We don't have a match
+                        pass
+            pfl.close()
+#        csv_file = open(csv_file_name,"r")
+#        csv_reader = csv.reader(csv_file, delimiter=',')
+#    for row in csv_reader:
+#        #
+#
+#        part1 = row[0][0:row[0].find(r'=') +1]
+#        print("%s will become %s" % (row[0], part1 + par_sub[old_par_value]))
 
 
 

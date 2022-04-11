@@ -13,13 +13,11 @@
 #  process. Note the files should contain absolute paths
 #
 #
-#   version 1.2  11/04/22   Dave Herdman
+#   version 1.1  07/04/22   Dave Herdman
 #
 #   Revision History
 #   V1.0    01/04/22    Initial Release Process only file totals
 #   V1.1    07/04/22    Improve processing, add parameter to direct output files
-#   V1.2    11/04/22    Fixed some bugs and only write new Parameter file if we
-#                       actually changed anything in it.
 # 
 #   Developed using the Pycharm IDE
 #   See PyCharm help at https://www.jetbrains.com/help/pycharm/
@@ -82,25 +80,15 @@ if __name__ == '__main__':
 
     with open(filelist_name) as nxt_file:
         for par_file in nxt_file:
-            #
-            # Open each input parameter file in turn
-            # for processing.
-            #
             par_file = par_file.rstrip(os.linesep)
+            out_par_fiddle_open = False
             try:
                 pfl = open(par_file,'r')
             except:
                 print("Error opening file %s" % (par_file))
                 sys.exit
-
-            out_line = []
-
-            pf_updated = False
-
             for line in pfl:
-                # Parse each line in this parameter file
-                # Check for all the key matches in any line
-                key_match = False
+                # Parse each line in the parameter file
                 for key in par_sub:
                     match_pos = line.find(key)
                     if match_pos >= 0:
@@ -110,48 +98,39 @@ if __name__ == '__main__':
                         lhs = line[:equal_pos +1]
 
                         # Formulate the new line
-                        out_line.append (lhs + par_sub[key])
+                        new_line = lhs + par_sub[key]
 
-                        # There can only be one match in a line
-                        # so we break out of this loop
-                        pf_updated = True
-                        key_match = True
-                        break
-
-                # If there were no matches we keep the original line
-                if key_match is False:
-                    out_line.append(line)
-            #
-            # When we get here we have processed all the lines the
-            # the input parameter file. We now need to write the
-            # output parameter file
-            #
+                        # if the output file is not open then do so
+                        # otherwise just write to it
+                        if out_par_file_open:
+                                # If the file is already open the we have written one line to it
+                                # We must now write a new line character before each subsequent
+                                # line written to the file
+                                npfl.write('\n')
+                                npfl.write(new_line)
+                        else:
+                            new_file_name = "new_" + par_file
+                            out_par_file_name = os.path.join(out_dir_name,new_file_name)
+                            print("output file name is %s" % (out_par_file_name))
+                            try:
+                                npfl = open(out_par_file_name,"w")
+                                out_par_file_open = True
+                            except:
+                                print("Can't open new parameter file %s for output" % (out_par_file_name))
+                                sys.exit
+                            npfl.write(new_line)
+                        print("got a match, file is %s" % (par_file))
+                        print("line is %s" % (line.rstrip(os.linesep)))
+                        print("rhs is %s" % (rhs))
+                        print("lhs is %s" % (lhs))
+                        print("line will be %s" % (new_line))
+                    else:
+                        # We don't have a match in this line of the input file
+                        pass
             pfl.close()
+            npfl.close()
 
-            #
-            # If we performed any updates then write the new file
-            # otherwise process the next file
-            #
-            if pf_updated is True:
-                new_file_name = "new_" + par_file
-                out_par_file_name = os.path.join(out_dir_name, new_file_name)
-                print("Output file name is %s" % (out_par_file_name))
-                try:
-                    npfl = open(out_par_file_name, "w")
-                    out_par_file_open = True
-                except:
-                    print("Can't open new parameter file %s for output" % (out_par_file_name))
-                    sys.exit
 
-                for nline in out_line:
-                    npfl.write(nline)
 
-                npfl.close()
-            else:
-                print("File %s had no changes" % (par_file))
-
-        # Next input Parameter File
-
-    # Finished processing input file list
 
 
